@@ -1,0 +1,153 @@
+"use client";
+import { useState } from "react";
+
+export default function AdminUserCreateView() {
+
+  const [form, setForm] = useState({
+    username: "",
+    firstName: "",
+    lastName: "",
+    departmentCode: "",
+    userType: "",
+    default_password: ""
+  });
+
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async () => {
+
+    setLoading(true);
+    setError("");
+    setResponse(null);
+
+    try {
+
+      const res = await fetch(`${BASE_URL}/admin/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.detail || "Something went wrong");
+        return;
+      }
+
+      setResponse(data);
+
+    } catch (err) {
+      setError("Unable to connect to server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{padding:"30px"}}>
+
+      <h2>Create User</h2>
+
+      <div style={{display:"grid", gap:"10px", maxWidth:"400px"}}>
+
+        <input
+          name="username"
+          placeholder="Username"
+          value={form.username}
+          onChange={handleChange}
+        />
+
+        <input
+          name="firstName"
+          placeholder="First Name"
+          value={form.firstName}
+          onChange={handleChange}
+        />
+
+        <input
+          name="lastName"
+          placeholder="Last Name"
+          value={form.lastName}
+          onChange={handleChange}
+        />
+
+        <input
+          name="departmentCode"
+          placeholder="Department Code"
+          value={form.departmentCode}
+          onChange={handleChange}
+        />
+
+        <input
+          name="userType"
+          placeholder="User Type"
+          value={form.userType}
+          onChange={handleChange}
+        />
+
+        <input
+          name="default_password"
+          placeholder="Default Password (optional)"
+          value={form.default_password}
+          onChange={handleChange}
+        />
+
+        <button onClick={handleSubmit} disabled={loading}>
+          {loading ? "Creating..." : "Create User"}
+        </button>
+
+      </div>
+
+      {/* SUCCESS RESPONSE */}
+
+      {response && (
+        <div style={{
+          marginTop:"25px",
+          padding:"20px",
+          background:"#ecfdf5",
+          border:"1px solid #10b981",
+          borderRadius:"6px"
+        }}>
+
+          <h3>User Created</h3>
+
+          <p><b>Username:</b> {response.username}</p>
+          <p><b>Name:</b> {response.firstName} {response.lastName}</p>
+          <p><b>Department:</b> {response.departmentCode}</p>
+          <p><b>User Type:</b> {response.userType}</p>
+          <p><b>Temporary Password:</b> {response.temporary_password}</p>
+          <p>{response.message}</p>
+
+        </div>
+      )}
+
+      {/* ERROR */}
+
+      {error && (
+        <div style={{
+          marginTop:"20px",
+          padding:"15px",
+          background:"#fef2f2",
+          border:"1px solid #ef4444"
+        }}>
+          {typeof error === "string" ? error : JSON.stringify(error)}
+        </div>
+      )}
+
+    </div>
+  );
+}
