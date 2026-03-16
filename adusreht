@@ -1,5 +1,20 @@
 "use client";
+
 import { useState } from "react";
+
+const departments = [
+  { label: "Information Technology", value: "IT" },
+  { label: "Human Resources", value: "HR" },
+  { label: "Finance", value: "FIN" },
+  { label: "Operations", value: "OPS" }
+];
+
+const userTypes = [
+  { label: "Admin", value: "ADMIN" },
+  { label: "Manager", value: "MANAGER" },
+  { label: "Operator", value: "OPERATOR" },
+  { label: "Viewer", value: "VIEWER" }
+];
 
 export default function AdminUserCreateView() {
 
@@ -35,115 +50,145 @@ export default function AdminUserCreateView() {
 
       const res = await fetch(`${BASE_URL}/admin/users`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.detail || "Something went wrong");
+        setError(data.detail || "Unable to create user");
         return;
       }
 
       setResponse(data);
 
     } catch (err) {
-      setError("Unable to connect to server");
+      setError("Server connection failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const copyPassword = () => {
+    navigator.clipboard.writeText(response?.temporary_password);
+    alert("Temporary password copied");
+  };
+
   return (
-    <div style={{padding:"30px"}}>
 
-      <h2>Create User</h2>
+    <div style={pageWrapper}>
 
-      <div style={{display:"grid", gap:"10px", maxWidth:"400px"}}>
+      <div style={card}>
 
-        <input
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-        />
+        <div style={cardHeader}>
+          <h2 style={title}>Create New User</h2>
+          <p style={subtitle}>
+            Create a system user and generate a temporary password.
+          </p>
+        </div>
 
-        <input
-          name="firstName"
-          placeholder="First Name"
-          value={form.firstName}
-          onChange={handleChange}
-        />
+        <div style={formGrid}>
 
-        <input
-          name="lastName"
-          placeholder="Last Name"
-          value={form.lastName}
-          onChange={handleChange}
-        />
+          <Input label="Username" name="username" value={form.username} onChange={handleChange} />
+          <Input label="First Name" name="firstName" value={form.firstName} onChange={handleChange} />
 
-        <input
-          name="departmentCode"
-          placeholder="Department Code"
-          value={form.departmentCode}
-          onChange={handleChange}
-        />
+          <Input label="Last Name" name="lastName" value={form.lastName} onChange={handleChange} />
 
-        <input
-          name="userType"
-          placeholder="User Type"
-          value={form.userType}
-          onChange={handleChange}
-        />
+          <div style={field}>
+            <label style={label}>Department</label>
+            <select
+              name="departmentCode"
+              value={form.departmentCode}
+              onChange={handleChange}
+              style={input}
+            >
+              <option value="">Select Department</option>
+              {departments.map(dep => (
+                <option key={dep.value} value={dep.value}>
+                  {dep.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <input
-          name="default_password"
-          placeholder="Default Password (optional)"
-          value={form.default_password}
-          onChange={handleChange}
-        />
+          <div style={field}>
+            <label style={label}>User Type</label>
+            <select
+              name="userType"
+              value={form.userType}
+              onChange={handleChange}
+              style={input}
+            >
+              <option value="">Select User Type</option>
+              {userTypes.map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <button onClick={handleSubmit} disabled={loading}>
-          {loading ? "Creating..." : "Create User"}
-        </button>
+          <Input
+            label="Default Password (Optional)"
+            name="default_password"
+            value={form.default_password}
+            onChange={handleChange}
+          />
+
+        </div>
+
+        <div style={buttonRow}>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            style={submitButton}
+          >
+            {loading ? "Creating User..." : "Create User"}
+          </button>
+        </div>
 
       </div>
 
-      {/* SUCCESS RESPONSE */}
+      {/* SUCCESS RESULT */}
 
       {response && (
-        <div style={{
-          marginTop:"25px",
-          padding:"20px",
-          background:"#ecfdf5",
-          border:"1px solid #10b981",
-          borderRadius:"6px"
-        }}>
+        <div style={successCard}>
 
-          <h3>User Created</h3>
+          <h3 style={{ marginBottom: 15 }}>User Created Successfully</h3>
 
-          <p><b>Username:</b> {response.username}</p>
-          <p><b>Name:</b> {response.firstName} {response.lastName}</p>
-          <p><b>Department:</b> {response.departmentCode}</p>
-          <p><b>User Type:</b> {response.userType}</p>
-          <p><b>Temporary Password:</b> {response.temporary_password}</p>
-          <p>{response.message}</p>
+          <table style={table}>
+            <tbody>
+
+              <Row label="Username" value={response.username} />
+              <Row label="Name" value={`${response.firstName} ${response.lastName}`} />
+              <Row label="Department" value={response.departmentCode} />
+              <Row label="User Type" value={response.userType} />
+
+              <tr>
+                <td style={tableLabel}>Temporary Password</td>
+                <td style={tableValue}>
+                  <span style={passwordText}>
+                    {response.temporary_password}
+                  </span>
+
+                  <button onClick={copyPassword} style={copyButton}>
+                    Copy
+                  </button>
+
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+
+          <p style={{ marginTop: 15 }}>{response.message}</p>
 
         </div>
       )}
 
-      {/* ERROR */}
-
       {error && (
-        <div style={{
-          marginTop:"20px",
-          padding:"15px",
-          background:"#fef2f2",
-          border:"1px solid #ef4444"
-        }}>
+        <div style={errorBox}>
           {typeof error === "string" ? error : JSON.stringify(error)}
         </div>
       )}
@@ -151,3 +196,137 @@ export default function AdminUserCreateView() {
     </div>
   );
 }
+
+/* Reusable Components */
+
+function Input({ label: lbl, name, value, onChange }) {
+  return (
+    <div style={field}>
+      <label style={label}>{lbl}</label>
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        style={input}
+      />
+    </div>
+  );
+}
+
+function Row({ label: lbl, value }) {
+  return (
+    <tr>
+      <td style={tableLabel}>{lbl}</td>
+      <td style={tableValue}>{value}</td>
+    </tr>
+  );
+}
+
+/* Styles */
+
+const pageWrapper = {
+  padding: "40px",
+  maxWidth: "900px"
+};
+
+const card = {
+  background: "#ffffff",
+  borderRadius: "10px",
+  padding: "35px",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+  marginBottom: "30px"
+};
+
+const cardHeader = {
+  marginBottom: "25px"
+};
+
+const title = {
+  fontSize: "22px",
+  fontWeight: "700"
+};
+
+const subtitle = {
+  color: "#64748b",
+  fontSize: "14px"
+};
+
+const formGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "20px"
+};
+
+const field = {
+  display: "flex",
+  flexDirection: "column"
+};
+
+const label = {
+  marginBottom: "6px",
+  fontWeight: "600",
+  fontSize: "13px"
+};
+
+const input = {
+  padding: "10px",
+  borderRadius: "6px",
+  border: "1px solid #cbd5e1",
+  fontSize: "14px"
+};
+
+const buttonRow = {
+  marginTop: "30px"
+};
+
+const submitButton = {
+  padding: "12px 20px",
+  background: "#2563eb",
+  color: "#fff",
+  border: "none",
+  borderRadius: "6px",
+  fontWeight: "600",
+  cursor: "pointer"
+};
+
+const successCard = {
+  padding: "25px",
+  background: "#f0fdf4",
+  border: "1px solid #16a34a",
+  borderRadius: "8px"
+};
+
+const table = {
+  width: "100%",
+  borderCollapse: "collapse"
+};
+
+const tableLabel = {
+  padding: "10px",
+  fontWeight: "600",
+  width: "200px"
+};
+
+const tableValue = {
+  padding: "10px"
+};
+
+const passwordText = {
+  fontWeight: "700",
+  color: "#2563eb",
+  marginRight: "10px"
+};
+
+const copyButton = {
+  padding: "4px 10px",
+  fontSize: "12px",
+  cursor: "pointer"
+};
+
+const errorBox = {
+  marginTop: "20px",
+  padding: "15px",
+  borderRadius: "6px",
+  border: "1px solid #ef4444",
+  background: "#fef2f2"
+};
